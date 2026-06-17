@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eduardo Badillo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@300;400&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --white: #ffffff;
+  --black: #111111;
+  --gray: #999;
+  --light: #e8e8e8;
+  --nav-h: 44px;
+  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font);
+  font-weight: 300;
+  overflow: hidden;
+}
+
+/* ─── HEADER ─── */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  z-index: 1000;
+  border-bottom: none;
+  background: transparent;
+  transition: background 0.4s ease;
+  overflow: visible;
+}
+header.over-text {
+  background: var(--white);
+  border-bottom: 1px solid var(--light);
+}
+
+.site-title {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--white);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.4s ease;
+}
+.site-title:hover { opacity: 0.6; }
+header.over-text .site-title { color: var(--black); }
+
+/* ─── NAV ─── */
+nav {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow: visible;
+}
+
+.nav-item {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-link {
+  display: block;
+  padding: 0 10px;
+  height: var(--nav-h);
+  line-height: var(--nav-h);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.4s ease;
+}
+.nav-link:hover, .nav-link.active { opacity: 0.45; }
+header.over-text .nav-link { color: var(--black); }
+
+/* Dropdown */
+.nav-dropdown {
+  position: absolute;
+  top: calc(var(--nav-h) - 2px);
+  left: 0;
+  background: var(--white);
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 200px;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
+  pointer-events: none;
+}
+.nav-item:hover .nav-dropdown {
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0s;
+}
+.nav-item:hover .nav-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Bridge gap between nav-link and dropdown so hover doesn't break */
+.nav-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.nav-dropdown a {
+  display: block;
+  padding: 9px 16px;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--black);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s, padding-left 0.15s;
+  border-bottom: 1px solid var(--light);
+}
+.nav-dropdown a:last-child { border-bottom: none; }
+.nav-dropdown a:hover { background: #f7f7f7; padding-left: 22px; }
+
+/* ─── MAIN STAGE ─── */
+#stage {
+  position: fixed;
+  inset: 0;
+}
+
+/* ─── GALLERY VIEW ─── */
+#gallery-view {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.img-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Ken Burns container */
+.kb-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+#main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+/* Ken Burns — always start at scale(1) and drift in slowly */
+@keyframes kb-0 {
+  from { transform: scale(1.0) translate(0,    0);    }
+  to   { transform: scale(1.05) translate(-0.8%, -0.5%); }
+}
+@keyframes kb-1 {
+  from { transform: scale(1.0) translate(0,    0);    }
+  to   { transform: scale(1.05) translate( 0.8%, -0.5%); }
+}
+@keyframes kb-2 {
+  from { transform: scale(1.0) translate(0,    0);    }
+  to   { transform: scale(1.04) translate(-1.0%,  0);   }
+}
+@keyframes kb-3 {
+  from { transform: scale(1.0) translate(0,    0);    }
+  to   { transform: scale(1.04) translate( 0,   -0.8%); }
+}
+
+#main-img.kb-active {
+  animation-duration: 20s;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+}
+#main-img.kb-0 { animation-name: kb-0; }
+#main-img.kb-1 { animation-name: kb-1; }
+#main-img.kb-2 { animation-name: kb-2; }
+#main-img.kb-3 { animation-name: kb-3; }
+
+/* side click zones */
+.click-prev, .click-next {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 50%;
+  cursor: pointer;
+  z-index: 10;
+}
+.click-prev { left: 0; cursor: w-resize; }
+.click-next { right: 0; cursor: e-resize; }
+
+/* ─── CAPTION BAR ─── */
+#caption-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+  z-index: 20;
+}
+
+.caption-text {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.75);
+}
+.caption-text a {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+  padding-bottom: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.caption-text a:hover {
+  color: #fff;
+  border-bottom-color: rgba(255,255,255,0.9);
+}
+.caption-text a {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.35);
+  padding-bottom: 1px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.caption-text a:hover {
+  color: rgba(255,255,255,1);
+  border-bottom-color: rgba(255,255,255,0.8);
+}
+
+.counter {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ─── ABOUT / CONTACT VIEW ─── */
+#text-view {
+  display: none;
+  position: absolute;
+  inset: 0;
+  top: var(--nav-h);
+  overflow-y: auto;
+  padding: 48px 18px 48px;
+  background: var(--white);
+  z-index: 50;
+}
+
+.text-inner {
+  max-width: 560px;
+}
+
+.text-view-title {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 28px;
+}
+
+.text-view-body {
+  font-size: 13.5px;
+  line-height: 1.85;
+  font-weight: 300;
+  color: #333;
+}
+.text-view-body p { margin-bottom: 1.3em; }
+.text-view-body a { color: var(--black); }
+
+.contact-item {
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--light);
+}
+.contact-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+  min-width: 100px;
+}
+.contact-value {
+  font-size: 13px;
+  color: var(--black);
+  text-decoration: none;
+}
+.contact-value:hover { opacity: 0.5; }
+
+/* ─── AWARDS VIEW ─── */
+.awards-list { margin-top: 0; }
+.award-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--light);
+  display: flex;
+  gap: 24px;
+}
+.award-year {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--gray);
+  min-width: 50px;
+  padding-top: 2px;
+}
+.award-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+}
+.award-desc strong { font-weight: 400; color: var(--black); }
+
+/* ─── PUBLISHED WORK ─── */
+.published-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 3px;
+  margin-top: 28px;
+}
+.pub-item {
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  cursor: pointer;
+}
+.pub-item img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: grayscale(10%);
+  transition: opacity 0.2s;
+}
+.pub-item:hover img { opacity: 0.7; }
+
+/* ─── FADE ─── */
+.fade-out { opacity: 0 !important; }
+
+/* ─── SERIES VIEW ─── */
+#series-view {
+  display: none;
+  position: absolute;
+  inset: 0;
+  top: var(--nav-h);
+  background: var(--white);
+  z-index: 60;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sv-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 20px 20px 0;
+  min-height: 0;
+}
+
+/* Main image: natural proportions, fits within available space */
+.sv-img-box {
+  position: relative;
+  max-width: min(85vw, calc(100vh - 220px) * 1.5);
+  max-height: calc(100vh - var(--nav-h) - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Two layers for crossfade */
+.sv-img-layer {
+  max-width: 100%;
+  max-height: calc(100vh - var(--nav-h) - 160px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+  will-change: opacity, transform;
+}
+/* The visible placeholder that holds the box size */
+#sv-main-img {
+  max-width: 100%;
+  max-height: calc(100vh - var(--nav-h) - 160px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  visibility: hidden;
+}
+
+/* prev / next click zones on main image */
+.sv-prev, .sv-next {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 50%;
+  z-index: 10;
+}
+.sv-prev { left: 0; cursor: w-resize; }
+.sv-next { right: 0; cursor: e-resize; }
+
+.sv-caption {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  color: var(--gray);
+  text-align: left;
+  width: 100%;
+  max-width: min(85vw, calc(100vh - 220px) * 1.5);
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+/* ─── FILMSTRIP ─── */
+.sv-filmstrip-wrap {
+  width: 100%;
+  border-top: 1px solid var(--light);
+  padding: 10px 0;
+  background: var(--white);
+  flex-shrink: 0;
+}
+
+.sv-filmstrip {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 0 20px;
+  scrollbar-width: none;
+  justify-content: flex-start;
+}
+.sv-filmstrip::-webkit-scrollbar { display: none; }
+
+.sv-thumb {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.sv-thumb:hover { opacity: 0.75; }
+.sv-thumb.active {
+  opacity: 1;
+  outline: 1.5px solid var(--black);
+}
+.sv-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+.ig-link {
+  color: var(--white);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.ig-link:hover { opacity: 1; }
+header.over-text .ig-link { color: var(--black); }
+
+
+/* ─── GRID OVERVIEW VIEW ─── */
+#grid-view {
+  display: none;
+  position: absolute;
+  inset: 0;
+  top: var(--nav-h);
+  background: var(--white);
+  z-index: 60;
+  overflow-y: auto;
+  padding: 48px 32px 48px;
+}
+
+.grid-view-title {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 32px;
+}
+
+.grid-covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 3px;
+}
+
+.grid-cover-item {
+  position: relative;
+  aspect-ratio: 3/2;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f0f0f0;
+}
+
+.grid-cover-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(15%);
+  transition: filter 0.4s ease, transform 0.5s ease;
+  display: block;
+}
+
+.grid-cover-item:hover img {
+  filter: grayscale(0%);
+  transform: scale(1.03);
+}
+
+.grid-cover-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 28px 14px 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+  transform: translateY(4px);
+  opacity: 0.85;
+  transition: opacity 0.3s, transform 0.3s;
+}
+.grid-cover-item:hover .grid-cover-info {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.grid-cover-name {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-transform: uppercase;
+}
+.grid-cover-count {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.6);
+  margin-top: 3px;
+}
+
+/* Slideshow progress bar */
+#slideshow-bar {
+  position: absolute;
+  bottom: 44px;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: rgba(255,255,255,0.55);
+  z-index: 25;
+  transition: width linear;
+  pointer-events: none;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:14px;">
+      <span class="site-title" onclick="goHome()">Eduardo Badillo</span>
+      <a href="https://www.instagram.com/eduardobadillol" target="_blank" class="ig-link" title="@eduardobadillol">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+        </svg>
+      </a>
+    </div>
+  <nav id="main-nav">
+
+    <div class="nav-item">
+      <span class="nav-link" onclick="openGrid('series')">SERIES</span>
+      <div class="nav-dropdown">
+        <a onclick="openCategory('series','manifestaciones')">Manifestaciones</a>
+        <a onclick="openCategory('series','fiestas')">Las fiestas de México</a>
+        <a onclick="openCategory('series','vida-cotidiana')">Vida Cotidiana</a>
+        <a onclick="openCategory('series','colaboraciones')">Colaboraciones</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-link" onclick="openGrid('stories')">STORIES</span>
+      <div class="nav-dropdown">
+        <a onclick="openCategory('stories','ninos-de-las-vias')">Los niños de las vías</a>
+        <a onclick="openCategory('stories','cumpleanos-cubiculo')">Cumpleaños en el cubículo</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-link" onclick="openTextView('about')">SOBRE MÍ</span>
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-link" onclick="openTextView('contact')">CONTACTO</span>
+    </div>
+
+  </nav>
+</header>
+
+<div id="stage">
+
+  <!-- GALLERY -->
+  <div id="gallery-view">
+    <div class="click-prev" onclick="prevImg()"></div>
+    <div class="click-next" onclick="nextImg()"></div>
+    <div class="img-wrap">
+      <div class="kb-frame">
+        <img id="main-img" src="" alt="">
+      </div>
+    </div>
+    <div id="slideshow-bar"></div>
+    <div id="caption-bar">
+      <span class="caption-text" id="caption-text"></span>
+      <span class="counter" id="counter"></span>
+    </div>
+  </div>
+
+
+  <!-- SERIES VIEW -->
+  <div id="series-view">
+    <div class="sv-top">
+      <div class="sv-img-box" id="sv-img-box">
+        <div class="sv-prev" onclick="svPrev()"></div>
+        <div class="sv-next" onclick="svNext()"></div>
+        <!-- Hidden sizer -->
+        <img id="sv-main-img" src="" alt="">
+        <!-- Crossfade layers -->
+        <img id="sv-layer-a" class="sv-img-layer" src="" alt="" style="opacity:1; transform:translate(-50%,-50%) scale(1);">
+        <img id="sv-layer-b" class="sv-img-layer" src="" alt="" style="opacity:0; transform:translate(-50%,-50%) scale(0.97);">
+      </div>
+      <div class="sv-caption">
+        <span id="sv-caption-text"></span>
+        <span id="sv-counter"></span>
+      </div>
+    </div>
+    <div class="sv-filmstrip-wrap">
+      <div class="sv-filmstrip" id="sv-filmstrip"></div>
+    </div>
+  </div>
+
+
+  <!-- GRID OVERVIEW -->
+  <div id="grid-view">
+    <div class="grid-view-title" id="grid-view-title"></div>
+    <div class="grid-covers" id="grid-covers"></div>
+  </div>
+
+  <!-- TEXT VIEWS -->
+  <div id="text-view">
+    <div class="text-inner" id="text-inner"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────
+// Reemplaza las URLs con las rutas de tus fotos locales: ./fotos/nombre.jpg
+const galleries = {
+  home: { label: '', images: [] }, // built dynamically by buildHomeGallery()
+  'series-manifestaciones': {
+    label: 'SERIES / MANIFESTACIONES',
+    images: [
+      { src: './_DSC8091-Mejorado-NR.JPG',  caption: 'Manifestaciones, 2 de Octubre 2025, CDMX.' },
+      { src: './_DSC5356.JPG',               caption: 'Manifestaciones, Inauguración del Mundial 2026, Madres Buscadoras, CDMX.' },
+      { src: './_DSC5470.JPG',               caption: 'Manifestaciones, Gentrificación Fuentes Brotantes 2025, CDMX.' },
+      { src: './DJI_0293.JPG',               caption: 'Manifestaciones, Inauguración del Mundial 2026, SNTE, CDMX.' },
+      { src: './_DSC8221.JPG',               caption: 'Manifestaciones, 2 de octubre 2025, CDMX.' },
+      { src: './_DSC8216.JPG',               caption: 'Manifestaciones, 2 de octubre 2025, CDMX.' },
+      { src: './_DSC7508-Mejorado-NR.JPG',   caption: 'Manifestaciones, 2 de octubre 2025, CDMX.' },
+      { src: './_DSC8341.JPG',               caption: 'Manifestaciones, 2 de octubre 2025, CDMX.' },
+      { src: './_DSC5574.JPG',               caption: 'Manifestaciones, Inauguración del Mundial 2026, Madres Buscadoras, CDMX.' },
+      { src: './_DSC5661.JPG',               caption: 'Manifestaciones, Inauguración del Mundial 2026, CDMX.' },
+      { src: './_DSC5683.JPG',               caption: 'Manifestaciones, Inauguración del Mundial 2026, CDMX.' },
+    ]
+  },
+  'series-fiestas': {
+    label: 'SERIES / LAS FIESTAS DE MÉXICO',
+    images: [
+      { src: './_DSC4032.JPG',              caption: 'Las fiestas de México, Carnaval de Carnavales, 2026, CDMX.' },
+      { src: './_DSC3979.JPG',              caption: 'Las fiestas de México, Carnaval de Carnavales, 2026, CDMX.' },
+      { src: './_DSC4014.JPG',              caption: 'Las fiestas de México, Carnaval de Carnavales, 2026, CDMX.' },
+      { src: './_DSC7015.JPG',              caption: 'Las fiestas de México, Aniversario de la Merced, 2025, CDMX.' },
+      { src: './_DSC9497-Mejorado-NR.JPG',  caption: 'Las fiestas de México, Desfile de día de muertos 2025, CDMX.' },
+      { src: './_DSC9508.JPG',              caption: 'Las fiestas de México, Desfile de día de muertos 2025, CDMX.' },
+      { src: './_DSC0195-Mejorado-NR.JPG',  caption: 'Las fiestas de México, Desfile navideño Bolofest 2025, CDMX.' },
+      { src: './_DSC0450.JPG',              caption: 'Las fiestas de México, Desfile navideño Bolofest 2025, CDMX.' },
+    ]
+  },
+  'series-vida-cotidiana': {
+    label: 'SERIES / VIDA COTIDIANA',
+    images: [
+      { src: './_DSC0626-Mejorado-NR.JPG',      caption: 'Vida Cotidiana, Reliquia de San Judas Tadeo 2025, CDMX.' },
+      { src: './_DSC4791.JPG',                   caption: 'Vida Cotidiana, Cabeza de puerco en el mercado de la Merced 2026, CDMX.' },
+      { src: './_DSC4896.JPG',                   caption: 'Vida Cotidiana, Payaso en el chopo 2026, CDMX.' },
+      { src: './_DSC6819.JPG',                   caption: 'Vida Cotidiana, Incendio en la Lagunilla 2025, CDMX.' },
+      { src: './_DSC5234.JPG',                   caption: 'Vida Cotidiana, Corazón de globo 2026, Toluca EdoMex.' },
+      { src: './_DSC4970.JPG',                   caption: 'Vida Cotidiana, La polleria 2026, Toluca EdoMex.' },
+      { src: './_DSC4893.JPG',                   caption: 'Vida Cotidiana, El camino del diablito, 2025, CDMX.' },
+      { src: './_DSC1989.JPG',                   caption: 'Vida Cotidiana, Rio de basura, 2025, Lerma EdoMex.' },
+      { src: './_DSC7252.JPG',                   caption: 'Vida Cotidiana, Director de mega orquesta 2025, CDMX.' },
+      { src: './_DSC4310.JPG',                   caption: 'Vida Cotidiana, Crucifixión en Cuautepec 2026, CDMX.' },
+      { src: './_DSC6243.JPG',                   caption: 'Vida Cotidiana, Taxi CDMX con perros 2025, CDMX.' },
+      { src: './_DSC8612.JPG',                   caption: 'Vida Cotidiana, Payaso Florentino 2025, CDMX.' },
+      { src: './_DSC0009.JPG',                   caption: 'Vida Cotidiana, Hombre del reloj, CDMX 2026.' },
+      { src: './_DSC2853.JPG',                   caption: 'Vida Cotidiana, El rol en el barrio 2026, CDMX.' },
+      { src: './_DSC4443.JPG',                   caption: 'Vida Cotidiana, Lowriders CDMX 2026.' },
+      { src: './_DSC4683.JPG',                   caption: 'Vida Cotidiana, Criptas CDMX 2026.' },
+      { src: './_DSC9619-Mejorado-NR.JPG',       caption: 'Vida Cotidiana, El mundo es tuyo 2026, CDMX.' },
+      { src: './_DSC6685-Mejorado-NR.JPG',       caption: 'Vida Cotidiana, Juegos patrios en el Zócalo 2025, CDMX.' },
+    ]
+  },
+  'series-colaboraciones': {
+    label: 'SERIES / COLABORACIONES',
+    images: [
+      { src: './DSC08060-Enhanced-NR.jpg',   caption: 'Colaboraciones, Publicidad SimiCafe.' },
+      { src: './DJI_0133.JPG',               caption: 'Colaboraciones, Mextropoli 2025.' },
+      { src: './_DSC9363-Mejorado-NR.JPG',   caption: 'Colaboraciones, Unicef Día de muertos 2025.' },
+      { src: './_DSC5651_jpg.jpeg',           caption: 'Colaboraciones, Concierto de Andrea Bocelli, Fundación del Dr. Simi.' },
+      { src: './_DSC7744__1__jpg.jpeg',       caption: 'Colaboraciones, Dr. Simi y Eugenio Derbez.' },
+    ]
+  },
+  'stories-cumpleanos-cubiculo': {
+    label: 'STORIES / CUMPLEAÑOS EN EL CUBÍCULO',
+    images: [
+      { src: './DSC02764.jpg',  caption: 'Cumpleaños en el cubículo.' },
+      { src: './DSC03487.JPG',  caption: 'Cumpleaños en el cubículo.' },
+      { src: './DSC03488.JPG',  caption: 'Cumpleaños en el cubículo.' },
+      { src: './DSC04236.JPG',  caption: 'Cumpleaños en el cubículo.' },
+      { src: './DSC04238.JPG',  caption: 'Cumpleaños en el cubículo.' },
+    ]
+  },
+  'stories-ninos-de-las-vias': {
+    label: 'STORIES / LOS NIÑOS DE LAS VÍAS',
+    images: [
+      { src: './_DSC4827.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4796.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4809.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4816.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4803.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4832.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4837.JPG', caption: 'Los niños de las vías 2026' },
+      { src: './_DSC4842.JPG', caption: 'Los niños de las vías 2026' },
+    ]
+  },
+
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let currentGallery = 'home';
+let currentIndex = 0;
+let isTransitioning = false;
+
+// ─── INIT ─────────────────────────────────────────────────────────
+
+// ─── HOME GALLERY: random pool from all galleries ─────────────────
+const HOME_KEYS = [
+  'series-manifestaciones',
+  'series-fiestas',
+  'series-vida-cotidiana',
+  'series-colaboraciones',
+  'stories-ninos-de-las-vias'
+];
+
+const HOME_EXCLUDED = [
+  '_DSC9363-Mejorado-NR',
+  '_DSC7744__1__jpg',
+  '_DSC4809',
+  '_DSC4816',
+  '_DSC4842',
+  '_DSC8221',
+  '_DSC0626-Mejorado-NR',
+  '_DSC5234',
+  '_DSC7015',
+  '_DSC0450',
+];
+
+function buildHomeGallery() {
+  const pool = [];
+  HOME_KEYS.forEach(key => {
+    const g = galleries[key];
+    if (!g) return;
+    g.images.forEach(img => {
+      const excluded = HOME_EXCLUDED.some(name => img.src.includes(name));
+      if (!excluded) pool.push({ src: img.src, caption: img.caption, galleryKey: key });
+    });
+  });
+  // Fisher-Yates shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  galleries['home'].images = pool;
+}
+
+function loadGallery(key, index) {
+  currentGallery = key;
+  currentIndex = index || 0;
+  if (key === 'home') {
+    showGalleryView();
+    renderImage();
+  } else {
+    showSeriesView();
+    renderSeriesImage(currentIndex);
+    buildFilmstrip();
+  }
+}
+
+function renderImage() {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+  const img = gallery.images[currentIndex];
+  const el = document.getElementById('main-img');
+
+  // Reset animation
+  el.classList.remove('kb-active', 'kb-0', 'kb-1', 'kb-2', 'kb-3');
+  el.style.opacity = '0';
+  el.style.animation = 'none';
+  void el.offsetWidth; // force reflow
+
+  // Pick a random Ken Burns direction
+  const kbClass = 'kb-' + (Math.floor(Math.random() * 4));
+
+  setTimeout(() => {
+    el.src = img.src;
+    el.alt = img.caption;
+
+    const startMotion = () => {
+      el.style.opacity = '1';
+      el.style.animation = '';
+      el.classList.add('kb-active', kbClass);
+    };
+
+    if (el.complete && el.naturalWidth > 0) {
+      startMotion();
+    } else {
+      el.onload = startMotion;
+    }
+
+    const capEl = document.getElementById('caption-text');
+    if (currentGallery === 'home' && img.galleryKey) {
+      const targetKey = img.galleryKey;
+      const parts = targetKey.split('-');
+      const type = parts[0];
+      const name = parts.slice(1).join('-');
+      const seriesLabel = galleries[targetKey] ? galleries[targetKey].label : '';
+      capEl.innerHTML = '<a onclick="loadGallery(\'' + targetKey + '\', 0)">'
+        + img.caption + ' &nbsp;→</a>';
+    } else {
+      capEl.textContent = img.caption;
+    }
+    document.getElementById('counter').textContent =
+      (currentIndex + 1) + ' / ' + gallery.images.length;
+    updateActiveNav();
+  }, 200);
+}
+
+function nextImg() {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+  currentIndex = (currentIndex + 1) % gallery.images.length;
+  renderImage();
+}
+
+function prevImg() {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+  currentIndex = (currentIndex - 1 + gallery.images.length) % gallery.images.length;
+  renderImage();
+}
+
+function openCategory(type, name) {
+  const key = type + '-' + name;
+  loadGallery(key, 0);
+}
+
+function goHome() {
+  buildHomeGallery();
+  loadGallery('home', 0);
+}
+
+// ─── VIEW SWITCHING ────────────────────────────────────────────────
+function showGalleryView() {
+  document.getElementById('gallery-view').style.display = 'block';
+  document.getElementById('text-view').style.display = 'none';
+  document.getElementById('series-view').style.display = 'none';
+  document.getElementById('grid-view').style.display = 'none';
+  document.querySelector('header').classList.remove('over-text');
+  if (currentGallery === 'home') startSlideshow();
+}
+
+function showTextView() {
+  stopSlideshow();
+  document.getElementById('gallery-view').style.display = 'none';
+  document.getElementById('series-view').style.display = 'none';
+  document.getElementById('grid-view').style.display = 'none';
+  document.getElementById('text-view').style.display = 'block';
+  document.querySelector('header').classList.add('over-text');
+}
+
+function updateActiveNav() {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+}
+
+// ─── TEXT VIEWS ────────────────────────────────────────────────────
+function openTextView(page) {
+  showTextView();
+  const inner = document.getElementById('text-inner');
+  inner.innerHTML = '';
+
+  if (page === 'about') {
+    inner.innerHTML = `
+      <div class="text-view-title">Sobre mí</div>
+      <div class="text-view-body">
+        <p>Eduardo Badillo es un fotógrafo documental, realizador audiovisual y gestor cultural independiente basado en la Ciudad de México. Con una trayectoria enfocada en el compromiso social y la identidad urbana, su obra se distingue por una profunda exploración de las subculturas, la desigualdad y la vida cotidiana.</p>
+        <p>A través de una lente crítica, Eduardo captura las tensiones entre el espacio público y el privado, dando voz a las historias invisibles que ocurren en los márgenes urbanos. En su práctica, utiliza la fotografía como un documento histórico y antropológico, registrando protestas sociales y dinámicas comunitarias para preservar la memoria colectiva y el pulso de la ciudad.</p>
+        <p>Aunque cuenta con una formación académica en ingeniería, su vocación por las artes lo ha llevado a liderar importantes proyectos de difusión, destacando la creación del <strong>Festival de Arte y Cultura Amoxcalli</strong>. Su rigor visual y narrativo lo han posicionado como finalista en certámenes de prestigio internacional, como el <strong>Festival Internacional de la Imagen (FINI) 2026</strong>.</p>
+      </div>
+    `;
+  }
+
+  else if (page === 'contact') {
+    inner.innerHTML = `
+      <div class="text-view-title">Contacto</div>
+      <div style="margin-top: 8px;">
+        <div class="contact-item">
+          <span class="contact-label">Email</span>
+          <a href="mailto:ebadillolozada@gmail.com" class="contact-value">ebadillolozada@gmail.com</a>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Instagram</span>
+          <a href="https://www.instagram.com/eduardobadillol" target="_blank" class="contact-value">@eduardobadillol</a>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Ciudad</span>
+          <span class="contact-value">Ciudad de México, México</span>
+        </div>
+      </div>
+    `;
+  }
+
+  else if (page === 'awards') {
+    inner.innerHTML = `
+      <div class="text-view-title">Premios y reconocimientos</div>
+      <div class="awards-list">
+        <div class="award-item">
+          <span class="award-year">2024</span>
+          <div class="award-desc"><strong>Premio Nacional de Fotoperiodismo</strong> — Fotografía de noticias generales. "Manifestación 8M, CDMX"</div>
+        </div>
+        <div class="award-item">
+          <span class="award-year">2023</span>
+          <div class="award-desc"><strong>Pictures of the Year Latin America</strong> — Serie documental. "La Frontera Sur"</div>
+        </div>
+        <div class="award-item">
+          <span class="award-year">2022</span>
+          <div class="award-desc"><strong>Premio Rostros Invisibles</strong> — Fotoperiodismo social. "Mercados de la Ciudad"</div>
+        </div>
+        <div class="award-item">
+          <span class="award-year">2021</span>
+          <div class="award-desc"><strong>NPPA Best of Photojournalism</strong> — Mención honorífica. Fotografía de spot news</div>
+        </div>
+        <div class="award-item">
+          <span class="award-year">2020</span>
+          <div class="award-desc"><strong>Beca Fotoseptiembre</strong> — Proyecto documental a largo plazo</div>
+        </div>
+        <div class="award-item">
+          <span class="award-year">2018</span>
+          <div class="award-desc"><strong>Premio CHIPP</strong> — Fotografía de derechos humanos</div>
+        </div>
+      </div>
+    `;
+  }
+
+  else if (page === 'published') {
+    inner.innerHTML = `
+      <div class="text-view-title">Trabajo publicado</div>
+      <div class="text-view-body">
+        <p>El trabajo de Eduardo Badillo ha aparecido en publicaciones nacionales e internacionales.</p>
+      </div>
+      <div style="margin-top: 8px;">
+        ${['The New York Times','El País','Le Monde','Proceso','Gatopardo','Internazionale','Time','Der Spiegel','Newsweek','AP Images','Getty Images','Bloomberg'].map(pub => `
+          <div class="contact-item">
+            <span class="contact-label" style="min-width: 0; flex:1; color: var(--black); font-size:13px;">${pub}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+
+// ─── SERIES VIEW ──────────────────────────────────────────────────
+function showSeriesView() {
+  stopSlideshow();
+  document.getElementById('gallery-view').style.display = 'none';
+  document.getElementById('text-view').style.display = 'none';
+  document.getElementById('grid-view').style.display = 'none';
+  const sv = document.getElementById('series-view');
+  sv.style.display = 'flex';
+  document.querySelector('header').classList.add('over-text');
+}
+
+let svActiveLayer = 'a'; // which layer is currently visible
+
+function renderSeriesImage(index) {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+  currentIndex = index;
+  const img = gallery.images[index];
+
+  const layerA = document.getElementById('sv-layer-a');
+  const layerB = document.getElementById('sv-layer-b');
+  const sizer  = document.getElementById('sv-main-img');
+
+  // Incoming = the hidden layer, outgoing = the visible one
+  const incoming = svActiveLayer === 'a' ? layerB : layerA;
+  const outgoing = svActiveLayer === 'a' ? layerA : layerB;
+
+  // Load new image into incoming layer (still invisible)
+  incoming.src = img.src;
+  incoming.style.transition = 'none';
+  incoming.style.opacity = '0';
+  incoming.style.transform = 'translate(-50%,-50%) scale(0.97)';
+
+  const doSwap = () => {
+    // Update sizer so the box resizes to the new image
+    sizer.src = img.src;
+
+    // Crossfade: incoming fades in & scales up, outgoing fades out
+    requestAnimationFrame(() => {
+      incoming.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
+      outgoing.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
+      incoming.style.opacity = '1';
+      incoming.style.transform = 'translate(-50%,-50%) scale(1)';
+      outgoing.style.opacity = '0';
+      outgoing.style.transform = 'translate(-50%,-50%) scale(1.02)';
+    });
+
+    svActiveLayer = svActiveLayer === 'a' ? 'b' : 'a';
+  };
+
+  if (incoming.complete && incoming.naturalWidth > 0) {
+    doSwap();
+  } else {
+    incoming.onload = doSwap;
+  }
+
+  document.getElementById('sv-caption-text').textContent = img.caption;
+  document.getElementById('sv-counter').textContent = (index + 1) + ' / ' + gallery.images.length;
+
+  document.querySelectorAll('.sv-thumb').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+  const active = document.querySelector('.sv-thumb.active');
+  if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+function buildFilmstrip() {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+
+  // Reset layers for fresh entry into a series
+  svActiveLayer = 'a';
+  const layerA = document.getElementById('sv-layer-a');
+  const layerB = document.getElementById('sv-layer-b');
+  layerA.src = gallery.images[0].src;
+  layerA.style.transition = 'none';
+  layerA.style.opacity = '1';
+  layerA.style.transform = 'translate(-50%,-50%) scale(1)';
+  layerB.style.transition = 'none';
+  layerB.style.opacity = '0';
+  layerB.style.transform = 'translate(-50%,-50%) scale(0.97)';
+  document.getElementById('sv-main-img').src = gallery.images[0].src;
+
+  const strip = document.getElementById('sv-filmstrip');
+  strip.innerHTML = '';
+  gallery.images.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'sv-thumb' + (i === currentIndex ? ' active' : '');
+    const im = document.createElement('img');
+    im.src = img.src;
+    im.alt = img.caption;
+    im.loading = 'lazy';
+    div.appendChild(im);
+    div.addEventListener('click', () => renderSeriesImage(i));
+    strip.appendChild(div);
+  });
+}
+
+function svNext() {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+  renderSeriesImage((currentIndex + 1) % gallery.images.length);
+}
+
+function svPrev() {
+  const gallery = galleries[currentGallery];
+  if (!gallery) return;
+  renderSeriesImage((currentIndex - 1 + gallery.images.length) % gallery.images.length);
+}
+
+
+// ─── SLIDESHOW (HOME AUTO-ADVANCE) ───────────────────────────────
+let slideshowTimer = null;
+const SLIDE_INTERVAL = 10000; // 10 seconds
+
+function startSlideshow() {
+  stopSlideshow();
+  const bar = document.getElementById('slideshow-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  void bar.offsetWidth;
+  bar.style.transition = 'width ' + SLIDE_INTERVAL + 'ms linear';
+  bar.style.width = '100%';
+  slideshowTimer = setTimeout(() => {
+    if (currentGallery === 'home') {
+      nextImg();
+      startSlideshow();
+    }
+  }, SLIDE_INTERVAL);
+}
+
+function stopSlideshow() {
+  if (slideshowTimer) { clearTimeout(slideshowTimer); slideshowTimer = null; }
+  const bar = document.getElementById('slideshow-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+}
+
+// Slideshow runs continuously — no pause on hover
+
+// ─── SWIPE SUPPORT ────────────────────────────────────────────────
+function addSwipe(el, onLeft, onRight) {
+  let x0 = null;
+  el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 50) { dx < 0 ? onLeft() : onRight(); }
+    x0 = null;
+  }, { passive: true });
+}
+
+addSwipe(
+  document.getElementById('gallery-view'),
+  () => { stopSlideshow(); nextImg(); if(currentGallery==='home') startSlideshow(); },
+  () => { stopSlideshow(); prevImg(); if(currentGallery==='home') startSlideshow(); }
+);
+addSwipe(
+  document.getElementById('series-view'),
+  () => svNext(),
+  () => svPrev()
+);
+
+// ─── GRID OVERVIEW ────────────────────────────────────────────────
+const seriesKeys  = ['series-manifestaciones','series-fiestas','series-vida-cotidiana','series-colaboraciones'];
+const storiesKeys = ['stories-ninos-de-las-vias', 'stories-cumpleanos-cubiculo'];
+
+const gridLabels = {
+  'series-manifestaciones':     'Manifestaciones',
+  'series-fiestas':             'Las fiestas de México',
+  'series-vida-cotidiana':      'Vida Cotidiana',
+  'series-colaboraciones':      'Colaboraciones',
+  'stories-ninos-de-las-vias':  'Los niños de las vías',
+  'stories-cumpleanos-cubiculo': 'Cumpleaños en el cubículo',
+};
+
+function openGrid(type) {
+  const keys = type === 'series' ? seriesKeys : storiesKeys;
+  const title = type === 'series' ? 'Series' : 'Stories';
+
+  document.getElementById('gallery-view').style.display = 'none';
+  document.getElementById('series-view').style.display = 'none';
+  document.getElementById('text-view').style.display = 'none';
+  const gv = document.getElementById('grid-view');
+  gv.style.display = 'block';
+  document.querySelector('header').classList.add('over-text');
+
+  document.getElementById('grid-view-title').textContent = title;
+
+  const container = document.getElementById('grid-covers');
+  container.innerHTML = '';
+
+  keys.forEach(key => {
+    const gallery = galleries[key];
+    if (!gallery || !gallery.images.length) return;
+    const cover = gallery.images[0].src;
+    const name  = gridLabels[key] || key;
+    const count = gallery.images.length;
+
+    const item = document.createElement('div');
+    item.className = 'grid-cover-item';
+    item.innerHTML = `
+      <img src="${cover}" alt="${name}" loading="lazy">
+      <div class="grid-cover-info">
+        <div class="grid-cover-name">${name}</div>
+        <div class="grid-cover-count">${count} fotografías</div>
+      </div>`;
+    item.addEventListener('click', () => loadGallery(key, 0));
+    container.appendChild(item);
+  });
+}
+
+
+// ─── KEYBOARD NAV ─────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const gv = document.getElementById('gallery-view');
+  const sv = document.getElementById('series-view');
+  if (sv.style.display === 'flex') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') svNext();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') svPrev();
+    return;
+  }
+  if (gv.style.display === 'none') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextImg();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevImg();
+});
+
+// ─── START ─────────────────────────────────────────────────────────
+buildHomeGallery();
+loadGallery('home', 0);
+</script>
+</body>
+</html>
